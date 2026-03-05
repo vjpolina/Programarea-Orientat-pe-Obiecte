@@ -5,11 +5,11 @@
 #include <vector>
 using namespace std;
 
- 
 class Rezervare {
 protected:
     string numeRezervare;
     string ora;
+    string oraFinal;
     string data;
     int nrPersoane;
 
@@ -18,31 +18,29 @@ public:
 
     virtual float pretRezervare() = 0;
 
-   //  int timpRezervare() {
-   //     float oraFin;
-   //     cout << "Indicati ora iesirii (format ORA.MINUTE): ";
-   //     cin >> oraFin;
-   //     float oraStart = stof(ora);
-   //     return (int)(oraFin - oraStart);
-   //  }
+    int timpRezervare() {
+        return (int)(stof(oraFinal) - stof(ora));
+    }
 
     Rezervare() {}
     virtual ~Rezervare() {}
 
-    void addRezervare(string numeClient, string oraIntrare, string dataRez, int nrClienti) {
-        numeRezervare = numeClient;
-        ora           = oraIntrare;
-        data          = dataRez;
-        nrPersoane    = nrClienti;
+    void addRezervare(string numeClient, string oraIntrare, string oraIesire, string dataRez, int nrClienti) {
+      numeRezervare = numeClient;
+      ora = oraIntrare;
+      oraFinal = oraIesire;
+      data = dataRez;
+      nrPersoane = nrClienti;
     }
 
-    void afisare(float pret) {
-        cout << "Tip: " << tip << endl;
-        cout << "Client: " << numeRezervare << endl;
-        cout << "Data: " << data << endl;
-        cout << "Ora intrare: " << ora << endl;
-        cout << "Nr. persoane: " << nrPersoane << endl;
-        cout << "Pret total: " << pret << " lei" << endl;
+    void afisare() {
+      cout << "Tip: " << tip << endl;
+      cout << "Client: " << numeRezervare << endl;
+      cout << "Data: " << data << endl;
+      cout << "Ora: " << ora << " - " << oraFinal << endl;
+      cout << "Durata: " << timpRezervare() << " ore" << endl;
+      cout << "Nr. persoane: " << nrPersoane << endl;
+      cout << "Pret total: " << pretRezervare() << " lei" << endl;
     }
 };
 
@@ -67,14 +65,13 @@ public:
 
     float pretRezervare() override {
         float pret = 200;
+        int durata = timpRezervare();
+        if (durata > 2) {
+            for (int i = 3; i <= durata; i++) {
+                pret += 50;
+            }
+        }
         return pret;
-      //  int durata = timpRezervare();
-      //  if (durata > 2) {
-      //       for (int i = 3; i <= durata; i++) {
-      //           pret += 50;
-      //       }
-      //  }
-      //  return pret;
     }
 };
 
@@ -115,7 +112,6 @@ public:
     }
 };
 
-
 class RezervareVIP : public Rezervare {
 public:
     RezervareVIP() { tip = "Rezervare VIP"; }
@@ -131,7 +127,8 @@ public:
 
         int optVIP;
         cout << "\nOptiuni premium VIP:\n1. Fotograf profesionist (300 lei)" << endl
-        << "2. Decorator floral (200 lei)\n3. Chef privat (500 lei)" << endl << "4. Finalizare optiuni" << endl;
+             << "2. Decorator floral (200 lei)\n3. Chef privat (500 lei)" << endl
+             << "4. Finalizare optiuni" << endl;
 
         do {
             cin >> optVIP;
@@ -148,46 +145,44 @@ public:
     }
 };
 
-
 Rezervare* creeazaRezervare(ifstream& listaRez) {
-   string tip, nume, data, ora;
-   int nrPers;
+    string tip, nume, data, ora, oraFinal;
+    int nrPers;
 
-   listaRez >> tip >> nume >> data >> ora >> nrPers;
+    listaRez >> tip >> nume >> data >> ora >> oraFinal >> nrPers;
 
-   if (listaRez.fail()) return nullptr;
+    if (listaRez.fail()) return nullptr;
 
-   Rezervare* rez = nullptr;
-   if      (tip == "RezervareZilnica") rez = new RezervareZilnica();
-   else if (tip == "RezervareEvenimentSpecial") rez = new RezervareEvenimentSpecial();
-   else if (tip == "RezervareGrupMare") rez = new RezervareGrupMare();
-   else if (tip == "RezervareVIP") rez = new RezervareVIP();
-   else return nullptr;
+    Rezervare* rez = nullptr;
+    if      (tip == "RezervareZilnica") rez = new RezervareZilnica();
+    else if (tip == "RezervareEvenimentSpecial") rez = new RezervareEvenimentSpecial();
+    else if (tip == "RezervareGrupMare") rez = new RezervareGrupMare();
+    else if (tip == "RezervareVIP") rez = new RezervareVIP();
+    else return nullptr;
 
-    rez->addRezervare(nume, ora, data, nrPers);
+    rez->addRezervare(nume, ora, oraFinal, data, nrPers);
     return rez;
 }
- 
+
 int main() {
-   vector<Rezervare*> rezervari;
+    vector<Rezervare*> rezervari;
 
-   ifstream listaRez("Rezervari.txt");
-      if (!listaRez.is_open()) {
-      cout << "Eroare: fisierul 'Rezervari.txt' nu a fost gasit." << endl;
-      return 1;
-   }
+    ifstream listaRez("Rezervari.txt");
+    if (!listaRez.is_open()) {
+        cout << "Eroare: fisierul 'Rezervari.txt' nu a fost gasit." << endl;
+        return 1;
+    }
 
-   while (!listaRez.eof()) {
-       Rezervare* rez = creeazaRezervare(listaRez);
-       if (rez) rezervari.push_back(rez);
-   }
-   listaRez.close();
+    while (!listaRez.eof()) {
+        Rezervare* rez = creeazaRezervare(listaRez);
+        if (rez) rezervari.push_back(rez);
+    }
+    listaRez.close();
 
-    cout << "\nRezervari: \n" << endl;
+    cout << "\nRezervari:\n" << endl;
     for (Rezervare* rez : rezervari) {
-        float pret = rez->pretRezervare();
-        rez->afisare(pret);
-        cout<<endl<<endl;
+        rez->afisare();
+        cout << endl << endl;
     }
 
     for (Rezervare* rez : rezervari) delete rez;
